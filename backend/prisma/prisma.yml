@@ -1,0 +1,24 @@
+# Specifies the HTTP endpoint of your Prisma API (deployed to a Prisma Demo server).
+endpoint: https://us1.prisma.sh/theran-3f2473/awesome-backend/dev?headers={"Authorization":"Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpYXQiOjE1NTEzNjk3MDQsIm5iZiI6MTU1MTM2OTcwNCwiZXhwIjoxNTUxNDU2MTA0fQ.dUxs7zvWIFLnVJFlb5I_TmUI0e0LeTLFZfPRxb21SCU"}
+
+# Defines your models, each model is mapped to the database as a table.
+datamodel: datamodel.prisma
+
+# Specifies the language and directory for the generated Prisma client.
+generate:
+  - generator: javascript-client
+    output: ../src/generated/prisma-client
+
+# Seed your service with initial data based on `seed.graphql`.
+seed:
+  import: seed.graphql
+
+# Ensures Prisma client is re-generated after a datamodel change.
+hooks:
+  post-deploy:
+    - prisma generate
+
+# If specified, the `secret` must be used to generate a JWT which is attached
+# to the `Authorization` header of HTTP requests made against the Prisma API.
+# Info: https://www.prisma.io/docs/reference/prisma-api/concepts-utee3eiquo#authentication
+# secret: ${env:PRISMA_SECRET}
