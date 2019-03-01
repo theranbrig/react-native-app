@@ -1,25 +1,22 @@
 import React from 'react';
-import { View, Text, Button, StyleSheet, TextInput } from 'react-native';
+import { AsyncStorage, View, Text, Button, StyleSheet, TextInput } from 'react-native';
 import { graphql, Mutation } from 'react-apollo';
 import gql from 'graphql-tag';
+import { NativeRouter, Route, Link, Switch } from 'react-router-native';
+import TextField from '../components/TextField';
+
+const defaultState = {
+  values: {
+    name: '',
+    password: '',
+    email: '',
+  },
+  isSubmitting: false,
+  errors: {},
+};
 
 class SignUp extends React.Component {
-  state = {
-    values: {
-      name: '',
-      password: '',
-      email: '',
-    },
-    errors: {},
-    isSubmitting: false,
-  };
-
-  // handleSubmit = async () => {
-  //   this.setState({ is });
-  //   const response = await this.props.mutate({
-  //     variables: this.state.values,
-  //   });
-  // };
+  state = defaultState;
 
   handleTextChange = (key, value) => {
     this.setState(state => ({
@@ -30,51 +27,51 @@ class SignUp extends React.Component {
     }));
   };
 
+  handleSubmit = async () => {
+    if (this.state.isSubmitting) {
+      return;
+    }
+    this.setState({ isSubmitting: true });
+    let response;
+    try {
+      response = await this.props.mutate({
+        variables: this.state.values,
+      });
+      console.log('Signed Up');
+    } catch (err) {
+      this.setState({
+        errors: {
+          email: 'Already Taken',
+        },
+        isSubmitting: false,
+      });
+    }
+    await AsyncStorage.setItem('@grouper/token', response.data.signup.token);
+    this.setState(defaultState);
+    this.props.history.push('/lists');
+  };
+
+  goToLogin = () => {
+    this.props.history.push('/login');
+  };
+
   render() {
     const { name, password, email } = this.state.values;
+    const { errors, isSubmitting } = this.state;
     return (
-      <Mutation mutation={signUpMutation} varibles={(name, password, email)}>
-        {(signup, { loading, error }) => {
-          loading && <Text>Loading</Text>;
-          error && <Text>{error}</Text>;
-          return (
-            <View style={styles.container}>
-              <Text>Sign Up</Text>
-              <View>
-                <TextInput
-                  onChangeText={text => this.handleTextChange('name', text)}
-                  value={name}
-                  style={styles.field}
-                  placeholder="Name"
-                  name="name"
-                />
-                <TextInput
-                  onChangeText={text => this.handleTextChange('email', text)}
-                  value={email}
-                  style={styles.field}
-                  placeholder="Email"
-                  name="email"
-                />
-                <TextInput
-                  onChangeText={text => this.handleTextChange('password', text)}
-                  value={password}
-                  style={styles.field}
-                  placeholder="Password"
-                  name="password"
-                  secureTextEntry
-                />
-                <Button
-                  title="Create Account"
-                  onPress={e => {
-                    e.preventDefault();
-                    signup({ variables: { name, email, password } });
-                  }}
-                />
-              </View>
-            </View>
-          );
-        }}
-      </Mutation>
+      <View style={styles.container}>
+        <Text>Sign Up</Text>
+        <View>
+          {isSubmitting && <Text>Submitting Info...</Text>}
+          <TextField value={name} name="name" onChangeText={this.handleTextChange} />
+          {errors.email && <Text style={{ color: 'red' }}>{errors.email}</Text>}
+          <TextField value={email} name="email" onChangeText={this.handleTextChange} />
+          <TextField value={password} name="password" onChangeText={this.handleTextChange} secureTextEntry />
+          <Button title="Create Account" onPress={this.handleSubmit} />
+          <Text style={styles.paragraph}>or</Text>
+          <Button title="Login" onPress={this.goToLogin} />
+        </View>
+      </View>
     );
   }
 }
@@ -97,8 +94,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   field: {
-    width: 200,
+    width: 300,
     fontSize: 20,
-    borderBottomWidth: 1,
+    borderBottomWidth: 2,
+    marginBottom: 10,
+  },
+  paragraph: {
+    textAlign: 'center',
   },
 });
