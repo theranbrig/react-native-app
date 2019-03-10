@@ -1,14 +1,27 @@
 const jwt = require('jsonwebtoken')
+require('dotenv').config()
 
-function getUserId(context) {
-  const Authorization = context.request.get('Authorization')
-  if (Authorization) {
-    const token = Authorization.replace('Bearer ', '')
+function getUserId(ctx, jwtToken) {
+  let token = '';
+  if (jwtToken) {
+    token = jwtToken;
+    console.log(token)
+  } else {
+    const Authorization = ctx.request.get('Authorization')
+    token = Authorization.replace('Bearer ', '')
+    console.log(token)
+  }
+  if (token) {
     const { userId } = jwt.verify(token, process.env.APP_SECRET)
+    console.log(token)
     return userId
   }
-
   throw new AuthError()
+}
+
+
+function createToken(userId) {
+  jwt.sign({ userId }, process.env.APP_SECRET);
 }
 
 class AuthError extends Error {
@@ -19,5 +32,6 @@ class AuthError extends Error {
 
 module.exports = {
   getUserId,
-  AuthError
+  AuthError,
+  createToken,
 }

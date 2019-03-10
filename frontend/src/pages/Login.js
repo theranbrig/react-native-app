@@ -4,6 +4,7 @@ import { graphql, Mutation } from 'react-apollo';
 import gql from 'graphql-tag';
 import { NativeRouter, Route, Link, Switch } from 'react-router-native';
 import TextField from '../components/TextField';
+import { TOKEN_KEY } from '../constants';
 
 const defaultState = {
   values: {
@@ -12,7 +13,7 @@ const defaultState = {
     email: '',
   },
   isSubmitting: false,
-  errors: {},
+  errors: null,
 };
 
 class Login extends React.Component {
@@ -32,23 +33,23 @@ class Login extends React.Component {
       return;
     }
     this.setState({ isSubmitting: true });
-    let response;
-    try {
-      response = await this.props.mutate({
-        variables: this.state.values,
-      });
-      console.log('Logged In');
-    } catch (err) {
+    const response = await this.props.mutate({
+      variables: this.state.values,
+    });
+    const { payload, error } = response.data.login;
+
+    if (payload) {
+      await AsyncStorage.setItem(TOKEN_KEY, payload.token);
+      console.log(payload.token);
+      this.setState(defaultState);
+      this.props.history.push('/lists');
+    } else {
       this.setState({
-        errors: {
-          err,
-        },
-        isSubmitting: false,
+        errors: error.msg,
       });
+      console.log(this.state.errors);
     }
-    await AsyncStorage.setItem('@grouper/token', response.data.login.token);
-    this.setState(defaultState);
-    this.props.history.push('/lists');
+    this.setState({ isSubmitting: false });
   };
 
   goToSignup = () => {
@@ -63,9 +64,10 @@ class Login extends React.Component {
         <Text>Login</Text>
         <View>
           {isSubmitting && <Text>Submitting Info...</Text>}
-          {errors.err && <Text style={{ color: 'red' }}>{errors.email}</Text>}
+          {errors && <Text style={{ color: 'red' }}>{errors}</Text>}
           <TextField value={email} name="email" onChangeText={this.handleTextChange} />
           <TextField value={password} name="password" onChangeText={this.handleTextChange} secureTextEntry />
+          {}
           <Button title={isSubmitting ? 'Logging In' : 'Log In'} onPress={this.handleSubmit} />
           <Text style={styles.paragraph}>or</Text>
           <Button title="Sign Up" onPress={this.goToSignup} />
@@ -78,7 +80,13 @@ class Login extends React.Component {
 const loginMutation = gql`
   mutation($email: String!, $password: String!) {
     login(email: $email, password: $password) {
-      token
+      payload {
+        token
+      }
+      error {
+        field
+        msg
+      }
     }
   }
 `;

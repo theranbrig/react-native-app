@@ -1,7 +1,7 @@
 import React from 'react';
 import { TextInput, StyleSheet } from 'react-native';
 
-export class TextField extends React.Component {
+class TextField extends React.Component {
   handleText = text => {
     const { onChangeText, name } = this.props;
     onChangeText(name, text);
@@ -14,7 +14,7 @@ export class TextField extends React.Component {
         onChangeText={this.handleText}
         value={value}
         style={styles.field}
-        placeholder={this.props.name}
+        placeholder={name}
         autoCapitalize="none"
         secureTextEntry={!!secureTextEntry}
       />
@@ -28,7 +28,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     borderWidth: 1,
     padding: 10,
-    fontSize: 20,
     marginBottom: 10,
   },
 });
